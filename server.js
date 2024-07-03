@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 
 // Define CORS options
 const corsOptions = {
-  origin: 'http://localhost:8081', // Allow requests from this origin
+  origin: ['http://localhost:8081', 'http://192.168.122.105:8081'], // Allow requests from this origin
   methods: ['GET', 'POST'], // Allow GET and POST requests
   allowedHeaders: ['Content-Type'], // Allow only Content-Type header
 };
@@ -24,10 +24,21 @@ mongoose.connect('mongodb://localhost:27017/Testing27', {
 
 app.post('/api/users', async (req, res) => {
   const { phoneNumber, password } = req.body;
-  const newUser = new User({ phoneNumber, password });
+  
   try {
-    await newUser.save();
-    res.status(201).send(newUser);
+    let user = await User.findOne({ phoneNumber });
+
+    if (user) {
+      if (user.password === password) {
+        return res.status(200).send({ message: 'User authenticated, navigate to home screen', navigate: 'HomeScreen' });
+      } else {
+        return res.status(401).send({ message: 'Invalid password' });
+      }
+    } else {
+      const newUser = new User({ phoneNumber, password });
+      await newUser.save();
+      return res.status(201).send({ message: 'User created, navigate to EnterUsername', navigate: 'EnterUsername' });
+    }
   } catch (error) {
     res.status(400).send(error);
   }
