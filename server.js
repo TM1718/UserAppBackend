@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 
 // Define CORS options
 const corsOptions = {
-  origin: ['http://localhost:8081', 'http://192.168.122.105:8081'], // Allow requests from this origin
+  origin: ['http://localhost:8081', 'http://192.168.122.105:8081'], // Allow requests from these origins
   methods: ['GET', 'POST'], // Allow GET and POST requests
   allowedHeaders: ['Content-Type'], // Allow only Content-Type header
 };
@@ -22,25 +22,49 @@ mongoose.connect('mongodb://localhost:27017/Testing27', {
   useUnifiedTopology: true,
 });
 
-app.post('/api/users', async (req, res) => {
+app.post('/api/users/login', async (req, res) => {
   const { phoneNumber, password } = req.body;
-  
+
+  try {
+    let user = await User.findOne({ phoneNumber });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.password !== password) {
+      return res.status(401).json({ message: 'Incorrect password' });
+    }
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+
+app.post('/api/users/register', async (req, res) => {
+  const { username, phoneNumber, password } = req.body;
+
   try {
     let user = await User.findOne({ phoneNumber });
 
     if (user) {
-      if (user.password === password) {
-        return res.status(200).send({ message: 'User authenticated, navigate to home screen', navigate: 'HomeScreen' });
-      } else {
-        return res.status(401).send({ message: 'Invalid password' });
-      }
-    } else {
-      const newUser = new User({ phoneNumber, password });
-      await newUser.save();
-      return res.status(201).send({ message: 'User created, navigate to EnterUsername', navigate: 'EnterUsername' });
+      return res.status(400).json({ message: 'User already exists' });
     }
+
+    user = new User({
+      username,
+      phoneNumber,
+      password,
+    });
+
+    await user.save();
+    res.status(201).json({ success: true });
   } catch (error) {
-    res.status(400).send(error);
+    console.error(error.message);
+    res.status(500).send('Server Error');
   }
 });
 
