@@ -3,16 +3,16 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const User = require('./models/User');
+const UserRequest = require('./models/UserRequest');
 
 const app = express();
 
 app.use(bodyParser.json());
 
-// Define CORS options
 const corsOptions = {
-  origin: ['http://localhost:8081', 'http://192.168.122.105:8081'], // Allow requests from these origins
-  methods: ['GET', 'POST'], // Allow GET and POST requests
-  allowedHeaders: ['Content-Type'], // Allow only Content-Type header
+  origin: ['http://localhost:8081', 'http://192.168.122.105:8081'],
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
 };
 
 app.use(cors(corsOptions));
@@ -36,13 +36,12 @@ app.post('/api/users/login', async (req, res) => {
       return res.status(401).json({ message: 'Incorrect password' });
     }
 
-    res.status(200).json({ success: true });
+    res.status(200).json({ success: true, userId: user._id, username: user.username });
   } catch (error) {
     console.error(error.message);
     res.status(500).send('Server Error');
   }
 });
-
 
 app.post('/api/users/register', async (req, res) => {
   const { username, phoneNumber, password } = req.body;
@@ -61,10 +60,50 @@ app.post('/api/users/register', async (req, res) => {
     });
 
     await user.save();
-    res.status(201).json({ success: true });
+    res.status(201).json({ success: true, userId: user._id, username: user.username });
   } catch (error) {
     console.error(error.message);
     res.status(500).send('Server Error');
+  }
+});
+
+app.post('/api/userRequests', async (req, res) => {
+  try {
+    const {
+      userId,
+      username,
+      goodsName,
+      vehicleCount,
+      fromDate,
+      toDate,
+      fromTime,
+      toTime,
+      company,
+    } = req.body;
+
+    const newUserRequest = new UserRequest({
+      userId,
+      username,
+      goodsName,
+      vehicleCount,
+      fromDate,
+      toDate,
+      fromTime,
+      toTime,
+      company,
+    });
+
+    await newUserRequest.save();
+
+    await User.findOneAndUpdate(
+      { _id: userId },
+      { $push: { requests: newUserRequest._id } }
+    );
+
+    res.status(201).json({ message: 'User request stored successfully' });
+  } catch (error) {
+    console.error('Error saving user request:', error);
+    res.status(500).json({ message: 'Error saving user request' });
   }
 });
 
