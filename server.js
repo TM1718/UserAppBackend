@@ -72,6 +72,7 @@ app.post('/api/userRequests', async (req, res) => {
     const {
       userId,
       username,
+      phoneNumber,
       goodsName,
       vehicleCount,
       fromDate,
@@ -84,6 +85,7 @@ app.post('/api/userRequests', async (req, res) => {
     const newUserRequest = new UserRequest({
       userId,
       username,
+      phoneNumber,
       goodsName,
       vehicleCount,
       fromDate,

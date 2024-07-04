@@ -10,6 +10,10 @@ const UserRequestSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  phoneNumber: {
+    type: String,
+    required: true,
+  },
   goodsName: {
     type: String,
     required: true,
