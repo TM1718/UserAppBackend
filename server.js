@@ -2,8 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const User = require('./models/User');
-const UserRequest = require('./models/UserRequest');
+const User = require('./models/User'); // Assuming User model definition
+const UserRequest = require('./models/UserRequest'); // Assuming UserRequest model definition
 
 const app = express();
 
@@ -36,7 +36,7 @@ app.post('/api/users/login', async (req, res) => {
       return res.status(401).json({ message: 'Incorrect password' });
     }
 
-    res.status(200).json({ success: true, userId: user._id, username: user.username });
+    res.status(201).json({ success: true, userId: user._id, username: user.username, phoneNumber: user.phoneNumber });
   } catch (error) {
     console.error(error.message);
     res.status(500).send('Server Error');
@@ -60,7 +60,7 @@ app.post('/api/users/register', async (req, res) => {
     });
 
     await user.save();
-    res.status(201).json({ success: true, userId: user._id, username: user.username });
+    res.status(201).json({ success: true, userId: user._id, username: user.username, phoneNumber: user.phoneNumber });
   } catch (error) {
     console.error(error.message);
     res.status(500).send('Server Error');
@@ -106,6 +106,41 @@ app.post('/api/userRequests', async (req, res) => {
   } catch (error) {
     console.error('Error saving user request:', error);
     res.status(500).json({ message: 'Error saving user request' });
+  }
+});
+
+app.get('/api/userRequests', async (req, res) => {
+  try {
+    const { userId } = req.query;
+
+    const user = await User.findById(userId).populate('requests');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json(user.requests);
+  } catch (error) {
+    console.error('Error fetching user requests:', error);
+    res.status(500).json({ message: 'Error fetching user requests' });
+  }
+});
+
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({
+      username: user.username,
+      phoneNumber: user.phoneNumber,
+    });
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    res.status(500).json({ message: 'Error fetching user details' });
   }
 });
 
