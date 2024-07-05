@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const User = require('./models/User'); // Assuming User model definition
 const UserRequest = require('./models/UserRequest'); // Assuming UserRequest model definition
+const Company = require('./models/Company'); // Assuming Company model definition
 
 const app = express();
 
@@ -67,6 +68,17 @@ app.post('/api/users/register', async (req, res) => {
   }
 });
 
+// Fetch all companies
+app.get('/api/companies', async (req, res) => {
+  try {
+    const companies = await Company.find();
+    res.status(200).json(companies);
+  } catch (error) {
+    console.error('Error fetching companies:', error);
+    res.status(500).json({ message: 'Error fetching companies' });
+  }
+});
+
 app.post('/api/userRequests', async (req, res) => {
   try {
     const {
@@ -80,6 +92,8 @@ app.post('/api/userRequests', async (req, res) => {
       fromTime,
       toTime,
       company,
+      fromPlace,
+      toPlace,
     } = req.body;
 
     const newUserRequest = new UserRequest({
@@ -93,6 +107,8 @@ app.post('/api/userRequests', async (req, res) => {
       fromTime,
       toTime,
       company,
+      fromPlace,
+      toPlace,
     });
 
     await newUserRequest.save();

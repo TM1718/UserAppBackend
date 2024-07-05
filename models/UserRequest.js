@@ -42,6 +42,14 @@ const UserRequestSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  fromPlace: {
+    type: String,
+    required: true,
+  },
+  toPlace: {
+    type: String,
+    required: true,
+  },
 });
 
 module.exports = mongoose.model('UserRequest', UserRequestSchema);

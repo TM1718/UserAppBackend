@@ -14,7 +14,12 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  requests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'UserRequest' }],
+  requests: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'UserRequest',
+    },
+  ],
 });
 
 module.exports = mongoose.model('User', UserSchema);
