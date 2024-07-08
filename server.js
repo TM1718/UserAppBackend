@@ -161,6 +161,61 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
+app.delete('/api/userRequests/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await UserRequest.findByIdAndDelete(id);
+    res.status(200).json({ success: true, message: 'Record deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting record:', error);
+    res.status(500).json({ success: false, message: 'Error deleting record' });
+  }
+});
+
+app.put('/api/userRequests/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      goodsName,
+      vehicleCount,
+      fromDate,
+      toDate,
+      fromTime,
+      toTime,
+      company,
+      fromPlace,
+      toPlace,
+    } = req.body;
+
+    const updatedUserRequest = await UserRequest.findByIdAndUpdate(
+      id,
+      {
+        goodsName,
+        vehicleCount,
+        fromDate,
+        toDate,
+        fromTime,
+        toTime,
+        company,
+        fromPlace,
+        toPlace,
+      },
+      { new: true }
+    );
+
+    if (!updatedUserRequest) {
+      return res.status(404).json({ success: false, message: 'Record not found' });
+    }
+
+    res.status(200).json({ success: true, message: 'Record updated successfully', updatedUserRequest });
+  } catch (error) {
+    console.error('Error updating record:', error);
+    res.status(500).json({ success: false, message: 'Error updating record' });
+  }
+});
+
+
+
 app.listen(3000, () => {
   console.log('Server is running on port 3000');
 });
