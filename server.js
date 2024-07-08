@@ -11,7 +11,7 @@ const app = express();
 app.use(bodyParser.json());
 
 const corsOptions = {
-  origin: ['http://localhost:8081', 'http://192.168.122.105:8081'],
+  origin: ['http://localhost:8081', 'http://192.168.122.105:8081', 'http://10.0.10.181.105:8081'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
 };
@@ -72,6 +72,7 @@ app.post('/api/users/register', async (req, res) => {
 app.get('/api/companies', async (req, res) => {
   try {
     const companies = await Company.find();
+    console.log('Companies:', companies); // Debugging line
     res.status(200).json(companies);
   } catch (error) {
     console.error('Error fetching companies:', error);
