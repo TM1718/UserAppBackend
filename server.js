@@ -72,7 +72,7 @@ app.post('/api/users/register', async (req, res) => {
 app.get('/api/companies', async (req, res) => {
   try {
     const companies = await Company.find();
-    console.log('Companies:', companies); // Debugging line
+    console.log('Companies:', companies);
     res.status(200).json(companies);
   } catch (error) {
     console.error('Error fetching companies:', error);
@@ -119,6 +119,11 @@ app.post('/api/userRequests', async (req, res) => {
       { $push: { requests: newUserRequest._id } }
     );
 
+    await Company.findOneAndUpdate(
+      { name: company },
+      { $push: { requests: newUserRequest._id } }
+    );
+
     res.status(201).json({ message: 'User request stored successfully' });
   } catch (error) {
     console.error('Error saving user request:', error);
@@ -130,51 +135,47 @@ app.get('/api/userRequests', async (req, res) => {
   try {
     const { userId } = req.query;
 
-    const user = await User.findById(userId).populate('requests');
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    res.status(200).json(user.requests);
+    const userRequests = await UserRequest.find({ userId });
+    res.status(200).json(userRequests);
   } catch (error) {
     console.error('Error fetching user requests:', error);
     res.status(500).json({ message: 'Error fetching user requests' });
   }
 });
 
-app.get('/api/users/:id', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
+app.delete('/api/userRequests/:id', async (req, res) => {
+  const { id } = req.params;
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+  try {
+    const deletedRequest = await UserRequest.findByIdAndDelete(id);
+
+    if (!deletedRequest) {
+      return res.status(404).json({ success: false, message: 'Record not found' });
     }
 
-    res.status(200).json({
-      username: user.username,
-      phoneNumber: user.phoneNumber,
-    });
-  } catch (error) {
-    console.error('Error fetching user details:', error);
-    res.status(500).json({ message: 'Error fetching user details' });
-  }
-});
+    // Remove request ID from associated user and company
+    await User.findOneAndUpdate(
+      { _id: deletedRequest.userId },
+      { $pull: { requests: deletedRequest._id } }
+    );
 
-app.delete('/api/userRequests/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    await UserRequest.findByIdAndDelete(id);
+    await Company.findOneAndUpdate(
+      { name: deletedRequest.company },
+      { $pull: { requests: deletedRequest._id } }
+    );
+
     res.status(200).json({ success: true, message: 'Record deleted successfully' });
   } catch (error) {
     console.error('Error deleting record:', error);
-    res.status(500).json({ success: false, message: 'Error deleting record' });
+    res.status(500).json({ success: false, message: 'Failed to delete record' });
   }
 });
 
+// Update a user request by ID
 app.put('/api/userRequests/:id', async (req, res) => {
+  const { id } = req.params;
+
   try {
-    const { id } = req.params;
     const {
       goodsName,
       vehicleCount,
@@ -187,7 +188,8 @@ app.put('/api/userRequests/:id', async (req, res) => {
       toPlace,
     } = req.body;
 
-    const updatedUserRequest = await UserRequest.findByIdAndUpdate(
+    // Update the user request
+    const updatedRequest = await UserRequest.findByIdAndUpdate(
       id,
       {
         goodsName,
@@ -200,22 +202,41 @@ app.put('/api/userRequests/:id', async (req, res) => {
         fromPlace,
         toPlace,
       },
-      { new: true }
+      { new: true } // Return the updated document
     );
 
-    if (!updatedUserRequest) {
+    if (!updatedRequest) {
       return res.status(404).json({ success: false, message: 'Record not found' });
     }
 
-    res.status(200).json({ success: true, message: 'Record updated successfully', updatedUserRequest });
+    res.status(200).json({ success: true, message: 'Record updated successfully', updatedRequest });
   } catch (error) {
     console.error('Error updating record:', error);
-    res.status(500).json({ success: false, message: 'Error updating record' });
+    res.status(500).json({ success: false, message: 'Failed to update record' });
+  }
+});
+
+
+app.get('/api/users/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { username, phoneNumber } = user;
+    res.status(200).json({ username, phoneNumber });
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    res.status(500).json({ message: 'Error fetching user details' });
   }
 });
 
 
 
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
-});
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
